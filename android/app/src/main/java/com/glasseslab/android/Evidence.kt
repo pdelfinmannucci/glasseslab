@@ -111,7 +111,7 @@ class EvidenceStore(private val context: Context) {
         .getOrNull()
   }
 
-  /** Empaqueta la carpeta de evidencia en cacheDir/evidence/*.zip (compartible vía FileProvider). */
+  /** Empaqueta la carpeta de evidencia en un .zip dentro de cacheDir/evidence (compartible vía FileProvider). */
   fun makeZip(): File {
     val outDir = File(context.cacheDir, "evidence").apply { mkdirs() }
     val zip = File(outDir, "GlassesLab-evidencia-${stamp()}.zip")

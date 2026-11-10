@@ -33,6 +33,7 @@ import com.meta.wearable.dat.core.session.DeviceSession
 import com.meta.wearable.dat.core.session.DeviceSessionState
 import com.meta.wearable.dat.core.types.Device
 import com.meta.wearable.dat.core.types.DeviceCompatibility
+import com.meta.wearable.dat.core.types.DeviceIdentifier
 import com.meta.wearable.dat.core.types.DeviceType
 import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
@@ -110,7 +111,7 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
 
   // ---------- Privado ----------
   internal var session: DeviceSession? = null
-  internal var currentDeviceId: String? = null
+  internal var currentDeviceId: DeviceIdentifier? = null
   private var camera: Camera? = null
   private var monitoring = false
   private val sessionJobs = mutableListOf<Job>()
@@ -186,7 +187,7 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
     }
   }
 
-  private fun watchDevice(id: String?) {
+  private fun watchDevice(id: DeviceIdentifier?) {
     deviceJob?.cancel()
     if (id == null) {
       deviceText = "Sin dispositivo"
