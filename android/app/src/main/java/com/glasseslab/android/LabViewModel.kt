@@ -65,6 +65,9 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
   private val app: Application = application
   val evidence = EvidenceStore(application)
   val extras = Extras(this)
+  val mock = MockMode(this)
+  /** true mientras el MockDeviceKit está activo: los resultados se marcan [SIMULADO]. */
+  var simulated by mutableStateOf(false)
 
   // ---------- Estado visible ----------
   val results = mutableStateListOf<TestResult>().apply { addAll(evidence.load() ?: TestCatalog.initial) }
@@ -101,6 +104,7 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
   // ---------- Conexión con la Activity ----------
   var requestWearablesPermission: (suspend (Permission) -> PermissionStatus)? = null
   var requestRecordAudio: (suspend () -> Boolean)? = null
+  var requestPhoneCamera: (suspend () -> Boolean)? = null
   /** La UI entrega un snapshot del preview (TextureView.getBitmap) para la evidencia de S1. */
   var snapshotProvider: (() -> Bitmap?)? = null
 
@@ -736,6 +740,13 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
 
   // ======================= Voz (arranque por "Hey Meta") =======================
 
+  fun enableMock() {
+    viewModelScope.launch {
+      val camera = requestPhoneCamera?.invoke() ?: false
+      mock.enable(hasPhoneCamera = camera)
+    }
+  }
+
   fun onVoiceLaunchIntent() {
     log("La app fue abierta por una invocación de voz (Hey Meta)")
     evidence.append("voice_launch_intent", environment())
@@ -766,13 +777,14 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
   internal fun setResult(id: String, status: TestStatus, detail: String, file: String? = null) {
     val index = results.indexOfFirst { it.id == id }
     if (index < 0) return
+    val shown = if (simulated) "[SIMULADO] $detail" else detail
     results[index] =
-        results[index].copy(status = status, detail = detail, evidenceFile = file, timestamp = evidence.iso())
+        results[index].copy(status = status, detail = shown, evidenceFile = file, timestamp = evidence.iso())
     evidence.save(results)
     evidence.append(
         "test_result",
-        environment() + mapOf("test" to id, "status" to status.label, "detail" to detail, "file" to (file ?: "")))
-    log("[$id] ${status.label}: $detail")
+        environment() + mapOf("test" to id, "status" to status.label, "detail" to shown, "file" to (file ?: "")))
+    log("[$id] ${status.label}: $shown")
   }
 
   private fun environment(): Map<String, String> =
@@ -783,6 +795,7 @@ class LabViewModel(application: Application) : AndroidViewModel(application) {
           "sdk" to "mwdat-android 1.0.1",
           "deviceType" to currentDeviceType,
           "firmware" to currentFirmware,
+          "mode" to if (simulated) "SIMULADO (MockDeviceKit)" else "lentes reales",
       )
 
   fun log(message: String) {

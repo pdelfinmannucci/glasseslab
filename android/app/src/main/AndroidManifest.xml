@@ -7,6 +7,9 @@
     <!-- Micrófono de los lentes por Bluetooth (HFP/SCO) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Solo modo simulado: la cámara del teléfono/emulador alimenta el video de los lentes virtuales -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:allowBackup="false"

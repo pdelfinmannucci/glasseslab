@@ -91,4 +91,5 @@ dependencies {
   implementation(libs.mwdat.inputs)
   implementation(libs.mwdat.motion)
   implementation(libs.mwdat.speech)
+  implementation(libs.mwdat.mockdevice) // modo simulado (lentes virtuales)
 }

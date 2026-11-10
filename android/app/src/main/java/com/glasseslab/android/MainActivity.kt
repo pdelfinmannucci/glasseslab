@@ -2,6 +2,7 @@ package com.glasseslab.android
 
 import android.Manifest.permission.BLUETOOTH
 import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.Manifest.permission.CAMERA
 import android.Manifest.permission.INTERNET
 import android.Manifest.permission.RECORD_AUDIO
 import android.content.Intent
@@ -85,10 +86,30 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  // 4) Cámara del teléfono/emulador: solo para el modo simulado (alimenta el video de los lentes virtuales).
+  private var cameraContinuation: CancellableContinuation<Boolean>? = null
+  private val cameraPermission =
+      registerForActivityResult(RequestPermission()) { granted ->
+        cameraContinuation?.resume(granted)
+        cameraContinuation = null
+      }
+
+  suspend fun requestPhoneCamera(): Boolean {
+    if (ContextCompat.checkSelfPermission(this, CAMERA) == PackageManager.PERMISSION_GRANTED) return true
+    return permissionMutex.withLock {
+      suspendCancellableCoroutine { continuation ->
+        cameraContinuation = continuation
+        continuation.invokeOnCancellation { cameraContinuation = null }
+        cameraPermission.launch(CAMERA)
+      }
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     vm.requestWearablesPermission = ::requestWearablesPermission
     vm.requestRecordAudio = ::requestRecordAudio
+    vm.requestPhoneCamera = ::requestPhoneCamera
     checkVoiceLaunch(intent)
     setContent { MaterialTheme { LabScreen(vm, this) } }
   }
@@ -109,6 +130,7 @@ class MainActivity : ComponentActivity() {
     if (isFinishing) {
       vm.requestWearablesPermission = null
       vm.requestRecordAudio = null
+      vm.requestPhoneCamera = null
     }
     super.onDestroy()
   }

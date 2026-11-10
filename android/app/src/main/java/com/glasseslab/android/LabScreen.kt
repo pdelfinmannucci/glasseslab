@@ -55,6 +55,8 @@ fun LabScreen(vm: LabViewModel, activity: Activity) {
   ) {
     Text("GlassesLab · DAT PoC (Android)", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
+    MockSection(vm)
+
     Section("Estado") {
       Info("Registro", vm.registrationText)
       Info("Lentes", vm.deviceText)
@@ -242,6 +244,30 @@ fun LabScreen(vm: LabViewModel, activity: Activity) {
 
     Section("Registro de eventos") { vm.logLines.takeLast(60).reversed().forEach { Mono(it) } }
     Spacer(Modifier.padding(24.dp))
+  }
+}
+
+@Composable
+private fun MockSection(vm: LabViewModel) {
+  val mock = vm.mock
+  Section("🧪 Modo simulado (sin lentes ni teléfono)") {
+    Note("Lentes Meta Glasses virtuales con el MockDeviceKit oficial de Meta. Sirve para probar la app en el emulador. Los resultados quedan marcados [SIMULADO] y NO prueban los lentes reales. No simula audio (A1, A2).")
+    Info("Estado", mock.status)
+    if (!mock.enabled) {
+      Btn("Activar lentes simulados") { vm.enableMock() }
+    } else {
+      Note("Luego usa los pasos 2 → 10 como con lentes reales. Para simular gestos y voz:")
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Btn("Botón captura", outlined = true) { mock.pressCapture() }
+        Btn("Deslizar", outlined = true) { mock.swipe() }
+        Btn("Tocar", outlined = true) { mock.tapSelect() }
+      }
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Btn("Decir frase", outlined = true) { mock.say("revisar presión de neumáticos") }
+        Btn("Hey Meta", outlined = true) { mock.heyMeta() }
+      }
+      Btn("Desactivar modo simulado", outlined = true) { mock.disable() }
+    }
   }
 }
 
