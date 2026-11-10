@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -34,8 +35,7 @@ val fetchMetaSampleMedia by
           val target = pkgDir.resolve(name)
           if (!target.exists()) {
             val url =
-                java.net
-                    .URI(
+                URI(
                         "https://raw.githubusercontent.com/meta/meta-wearables-dat-android/$commit/" +
                             "samples/CameraAccess/app/src/main/java/com/meta/wearable/dat/" +
                             "externalsampleapps/cameraaccess/stream/$name")

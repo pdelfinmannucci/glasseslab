@@ -13,6 +13,9 @@ Prueba de concepto para capturar foto, video, audio y streaming desde lentes Met
 | `docs/03-pruebas-aceptacion.md` | Casos de prueba, criterios, evidencia y registro de resultados |
 | `docs/04-ciclo-desarrollo-windows.md` | Cómo programar en la laptop, compilar en la nube, instalar y depurar |
 | `scripts/compilar-en-la-nube.ps1` | Un comando: sube cambios, espera la compilación y descarga los IPA |
+| `docs/05-android.md` | Versión Android: requisitos, instalación del APK y desarrollo con Android Studio |
+| `android/` | GlassesLab para Android (Kotlin + Jetpack Compose), SDK `com.meta.wearable:mwdat-*` 1.0.1 |
+| `.github/workflows/build-android.yml` | Compila en Linux el APK de GlassesLab y el sample oficial CameraAccess de Android |
 | `GlassesLab/` | App SwiftUI (XcodeGen). Dependencias: `MWDATCore`, `MWDATCamera` 1.0.1 |
 | `.github/workflows/build-unsigned-ipa.yml` | Compila en macOS de GitHub el sample oficial `CameraAccess` y `GlassesLab` como IPA sin firmar |
 | `.github/workflows/testflight.yml` | Firma en la nube y sube a TestFlight (requiere Apple Developer Program) |
