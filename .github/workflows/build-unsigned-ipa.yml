@@ -8,6 +8,9 @@ name: Build unsigned IPAs
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - "android/**"
+      - ".github/workflows/build-android.yml"
 
 jobs:
   build:

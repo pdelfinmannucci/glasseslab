@@ -1,0 +1,70 @@
+# Compila en Linux (gratis, con Android SDK preinstalado):
+#   1) CameraAccess -> sample oficial de Meta para Android, sin modificar (prueba de control)
+#   2) GlassesLab   -> esta PoC portada a Android con pruebas de aceptación y evidencia
+# Produce APK de depuración (firmados con la clave debug): se instalan directo en el teléfono.
+name: Build Android APKs
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/build-android.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compilar sample oficial CameraAccess (debug)
+        continue-on-error: true
+        run: |
+          git clone --depth 1 https://github.com/meta/meta-wearables-dat-android.git "$RUNNER_TEMP/dat-android"
+          cd "$RUNNER_TEMP/dat-android/samples/CameraAccess"
+          bash ./gradlew --no-daemon assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/CameraAccess-android-debug.apk"
+
+      - name: Compilar GlassesLab (debug)
+        working-directory: android
+        run: |
+          set -o pipefail
+          bash ./gradlew --no-daemon assembleDebug 2>&1 | tee "$RUNNER_TEMP/glasseslab-android.log"
+
+      - name: Reportar errores de compilación como anotaciones
+        if: failure()
+        run: |
+          grep -E "^e: |error:|What went wrong|Could not|Unresolved|> " "$RUNNER_TEMP/glasseslab-android.log" \
+            | head -60 | while IFS= read -r line; do
+              clean=$(echo "$line" | sed -E 's#file:///home/runner/work/[^/]+/[^/]+/##; s/%/%25/g')
+              echo "::error title=build::${clean}"
+            done
+
+      - name: Subir log (si falla)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-log
+          path: ${{ runner.temp }}/glasseslab-android.log
+
+      - name: Reunir APKs
+        if: always()
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk GlassesLab-android-debug.apk || true
+
+      - name: Publicar APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks-android
+          path: |
+            GlassesLab-android-debug.apk
+            CameraAccess-android-debug.apk
+          if-no-files-found: warn
