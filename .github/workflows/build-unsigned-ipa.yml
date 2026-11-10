@@ -1,0 +1,71 @@
+# Ruta A (sin Mac, sin cuenta de pago):
+# compila en un Mac de GitHub dos IPA SIN FIRMAR:
+#   1) CameraAccess  -> sample oficial de Meta, sin modificar (prueba más rápida y confiable)
+#   2) GlassesLab    -> esta PoC con registro de evidencia y pruebas de aceptación
+# Luego se firman e instalan desde Windows con Sideloadly usando tu Apple ID (gratis, 7 días).
+name: Build unsigned IPAs
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    # Si 'macos-26' no existe en tu cuenta, cambia a 'macos-latest' y revisa que traiga Xcode >= 26.4.
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Seleccionar Xcode 26.x más reciente (DAT 1.0.1 exige Xcode 26.4+)
+        run: |
+          ls -d /Applications/Xcode*.app || true
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "No hay Xcode 26 en este runner"; exit 1; fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Compilar sample oficial CameraAccess (sin firmar)
+        run: |
+          git clone --depth 1 https://github.com/facebook/meta-wearables-dat-ios.git "$RUNNER_TEMP/dat"
+          cd "$RUNNER_TEMP/dat/samples/CameraAccess"
+          xcodebuild -project CameraAccess.xcodeproj -scheme CameraAccess \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/CameraAccess.xcarchive" archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -40
+          mkdir -p "$RUNNER_TEMP/ca/Payload"
+          cp -R "$RUNNER_TEMP/CameraAccess.xcarchive/Products/Applications/"*.app "$RUNNER_TEMP/ca/Payload/"
+          (cd "$RUNNER_TEMP/ca" && zip -qry "$GITHUB_WORKSPACE/CameraAccess-unsigned.ipa" Payload)
+
+      - name: Compilar GlassesLab (sin firmar)
+        run: |
+          cd GlassesLab
+          xcodegen generate
+          set -o pipefail
+          xcodebuild -project GlassesLab.xcodeproj -scheme GlassesLab \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/GlassesLab.xcarchive" archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee "$RUNNER_TEMP/glasseslab-build.log" | grep -E "error:|warning: .*GlassesLab|BUILD|ARCHIVE" || true
+          test -d "$RUNNER_TEMP/GlassesLab.xcarchive/Products/Applications/GlassesLab.app"
+          mkdir -p "$RUNNER_TEMP/gl/Payload"
+          cp -R "$RUNNER_TEMP/GlassesLab.xcarchive/Products/Applications/GlassesLab.app" "$RUNNER_TEMP/gl/Payload/"
+          (cd "$RUNNER_TEMP/gl" && zip -qry "$GITHUB_WORKSPACE/GlassesLab-unsigned.ipa" Payload)
+
+      - name: Subir log de compilación (si falla)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ runner.temp }}/glasseslab-build.log
+
+      - name: Publicar IPAs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipas-sin-firmar
+          path: |
+            CameraAccess-unsigned.ipa
+            GlassesLab-unsigned.ipa
+          if-no-files-found: warn
