@@ -47,7 +47,7 @@ jobs:
           # así que se agrupan en una sola anotación multilínea.
           { grep -E "^e: " "$LOG" | sed -E 's#file:///home/runner/work/[^/]+/[^/]+/##' | head -40
             grep -A6 "What went wrong" "$LOG" | grep -v "^--$" | head -20; } > "$RUNNER_TEMP/errors.txt"
-          body=$(sed -e 's/%/%25/g' -e 's//%0D/g' "$RUNNER_TEMP/errors.txt" | awk '{printf "%s%%0A", $0}')
+          body=$(sed -e 's/%/%25/g' "$RUNNER_TEMP/errors.txt" | awk '{printf "%s%%0A", $0}')
           echo "::error title=build-errors::${body}"
 
       - name: Subir log (si falla)
