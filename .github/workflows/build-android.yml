@@ -42,11 +42,13 @@ jobs:
       - name: Reportar errores de compilación como anotaciones
         if: failure()
         run: |
-          grep -E "^e: |error:|What went wrong|Could not|Unresolved|> " "$RUNNER_TEMP/glasseslab-android.log" \
-            | head -60 | while IFS= read -r line; do
-              clean=$(echo "$line" | sed -E 's#file:///home/runner/work/[^/]+/[^/]+/##; s/%/%25/g')
-              echo "::error title=build::${clean}"
-            done
+          LOG="$RUNNER_TEMP/glasseslab-android.log"
+          # Errores Kotlin primero (e: ...), luego el resumen de Gradle. GitHub muestra 10 por paso,
+          # así que se agrupan en una sola anotación multilínea.
+          { grep -E "^e: " "$LOG" | sed -E 's#file:///home/runner/work/[^/]+/[^/]+/##' | head -40
+            grep -A6 "What went wrong" "$LOG" | grep -v "^--$" | head -20; } > "$RUNNER_TEMP/errors.txt"
+          body=$(sed -e 's/%/%25/g' -e 's//%0D/g' "$RUNNER_TEMP/errors.txt" | awk '{printf "%s%%0A", $0}')
+          echo "::error title=build-errors::${body}"
 
       - name: Subir log (si falla)
         if: failure()

@@ -33,6 +33,21 @@
 4. Conecta el teléfono por USB, acepta "¿Permitir depuración USB?" y pulsa **Run ▶** en Android Studio. La app se instala y abre; los logs aparecen en **Logcat**.
 5. Cada cambio en el código: **Run ▶** de nuevo (segundos, no minutos).
 
+## Opción 3 · Sin teléfono: emulador + lentes simulados (modo simulado)
+Sirve para ver y probar la app y su flujo **hoy**, sin hardware. No prueba los lentes reales: cada resultado queda marcado **[SIMULADO]**.
+
+1. Instala **Android Studio** (developer.android.com/studio) y acepta tú las licencias del SDK en el asistente.
+2. *More Actions → Virtual Device Manager → Create device* → **Pixel 8** → imagen de sistema **API 35 o 36 (Google APIs, x86_64)** → *Finish*. Arráncalo con ▶.
+   - Si Android Studio avisa que falta virtualización: activa *Intel VT-x / AMD-V* en la BIOS o la función de Windows *Plataforma del hipervisor de Windows*.
+3. Instala la app en el emulador: arrastra `salida\GlassesLab-android-debug.apk` a la ventana del emulador, **o** abre la carpeta `android` en Android Studio y pulsa **Run ▶**.
+4. En la app: acepta los permisos → sección **🧪 Modo simulado** → **Activar lentes simulados** (acepta el permiso de cámara: la cámara virtual del emulador será el "video de los lentes").
+5. Sigue los pasos 2 → 10. Para gestos y voz usa los botones *Botón captura*, *Deslizar*, *Tocar*, *Decir frase* y *Hey Meta* del modo simulado.
+
+| Prueba | ¿Se puede simular? |
+|---|---|
+| R0, D0, S1, F1, F2, V1, I1, M1, SP1, VI1, IA1 | Sí (con datos simulados) |
+| A1 (PCM DAT), A2 (micrófono Bluetooth) | **No**: MockDeviceKit no inyecta audio |
+
 ## Pruebas
 Las mismas 13 pruebas que en iPhone (ver `03-pruebas-aceptacion.md`), con dos diferencias:
 - **D0** además registra la versión de firmware de los lentes (`Device.firmwareInfo`).
