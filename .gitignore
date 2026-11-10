@@ -2,3 +2,4 @@ salida/
 *.ipa
 *.xcodeproj/
 .DS_Store
+.tools/
